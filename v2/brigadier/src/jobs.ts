@@ -1,6 +1,7 @@
 import { Event } from "./events"
 import { GraphBuilder, GraphItemSpec } from "./graph"
 import { ConcurrentGroup, SerialGroup } from "./groups"
+import { ErrorNotifier, ErrorNotifying } from "./onerror"
 import { Retry } from "./retry"
 import { Runnable } from "./runnables"
 
@@ -176,6 +177,22 @@ export class Job implements Runnable {
    */
   public static graph(spec: { [key: string]: GraphItemSpec }): Runnable {
     return GraphBuilder.build(spec)
+  }
+
+  /**
+   * Specifies a Runnable that tries a sub-Runnable, and if that fails
+   * then runs an error handler. To avoid ambiguity, the error handler is
+   * not passed to the Job.try function, but via a separate onError
+   * function: the syntax is `Job.try(...).onError(...)`.
+   * 
+   * If the main Runnable fails, then the `try` fails; unlike JavaScript's
+   * `catch` construct, try...onError does not swallow the error.
+   * 
+   * @param runnable The work item to be attempted and for which you want
+   * to receive failure notification
+   */
+  public static try(runnable: Runnable): ErrorNotifying {
+    return new ErrorNotifier(runnable)
   }
 }
 
