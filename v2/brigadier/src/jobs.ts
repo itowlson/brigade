@@ -1,6 +1,7 @@
 import { Event } from "./events"
 import { GraphBuilder, GraphItemSpec } from "./graph"
 import { ConcurrentGroup, SerialGroup } from "./groups"
+import { Retry } from "./retry"
 import { Runnable } from "./runnables"
 
 const defaultTimeout: number = 1000 * 60 * 15
@@ -144,6 +145,23 @@ export class Job implements Runnable {
    */
   public static concurrent(...runnables: Runnable[]): ConcurrentGroup {
     return new ConcurrentGroup(...runnables)
+  }
+
+  /**
+   * Specifies a Runnable that tries and retries a sub-Runnable (such
+   * as a Job) until it succeeds.
+   * 
+   * If the Runnable is retried, it is re-run from the start. For
+   * composite Runnables such as groups or graphs, this means that 
+   * if they partially succeeded, the parts that succeeded will be
+   * re-run. It is often better to build the composite from `retry`
+   * Runnables rather than to retry the composite.
+   * @param runnable The work item to be run and retried if necessary
+   * @param maxAttempts The maximum number of times to try to run the work
+   * item. This must be a positive number.
+   */
+  public static retry(runnable: Runnable, maxAttempts: number): Runnable {
+    return new Retry(runnable, maxAttempts)
   }
 
   /**

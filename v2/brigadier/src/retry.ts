@@ -1,7 +1,11 @@
 import { Runnable } from "./runnables"
 
 export class Retry implements Runnable {
-  constructor(private readonly impl: Runnable, private readonly maxAttempts: number) {}
+  constructor(private readonly impl: Runnable, private readonly maxAttempts: number) {
+    if (maxAttempts < 1) {
+      throw new Error("maxAttempts must be positive")
+    }
+  }
 
   async run(): Promise<void> {
     let attemptCount = 0
