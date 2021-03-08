@@ -1,4 +1,5 @@
 import { Event } from "./events"
+import { GraphBuilder, GraphItemSpec } from "./graph"
 import { ConcurrentGroup, SerialGroup } from "./groups"
 import { Runnable } from "./runnables"
 
@@ -143,6 +144,20 @@ export class Job implements Runnable {
    */
   public static concurrent(...runnables: Runnable[]): ConcurrentGroup {
     return new ConcurrentGroup(...runnables)
+  }
+
+  /**
+   * Specifies a Runnable that consists of sub-Runnables with
+   * dependencies between them. This provides finer control than
+   * Job.sequence and Job.concurrent, at the expense of being more
+   * complex to specify.
+   * @param spec Describes the Runnables and how they depend on each
+   * other. This is an object whose keys are IDs, and whose values
+   * are either Runnables or pairs of "Runnable plus IDs of the entries
+   * it depends on"
+   */
+  public static graph(spec: { [key: string]: GraphItemSpec }): Runnable {
+    return GraphBuilder.build(spec)
   }
 }
 
