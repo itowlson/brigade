@@ -2,7 +2,7 @@ import { Event } from "./events"
 import { GraphBuilder, GraphItemSpec } from "./graph"
 import { ConcurrentGroup, SerialGroup } from "./groups"
 import { ErrorNotifier, ErrorNotifying } from "./onerror"
-import { Retry } from "./retry"
+import { NO_BACKOFF, Retry, RetryConfiguration } from "./retry"
 import { Runnable } from "./runnables"
 
 const defaultTimeout: number = 1000 * 60 * 15
@@ -157,12 +157,17 @@ export class Job implements Runnable {
    * if they partially succeeded, the parts that succeeded will be
    * re-run. It is often better to build the composite from `retry`
    * Runnables rather than to retry the composite.
+   * 
+   * By default, retries happen immediately on failure. To wait
+   * between retries, use the RetryConfiguration#withBackoff method.
+   * The syntax is `Job.retry(...).withBackoff(...)`.
+   * 
    * @param runnable The work item to be run and retried if necessary
    * @param maxAttempts The maximum number of times to try to run the work
    * item. This must be a positive number.
    */
-  public static retry(runnable: Runnable, maxAttempts: number): Runnable {
-    return new Retry(runnable, maxAttempts)
+  public static retry(runnable: Runnable, maxAttempts: number): Runnable & RetryConfiguration {
+    return new Retry(runnable, maxAttempts, NO_BACKOFF)
   }
 
   /**

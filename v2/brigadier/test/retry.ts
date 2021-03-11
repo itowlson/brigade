@@ -45,6 +45,34 @@ describe("Retry combinator", () => {
       assert.equal(ledger.length, 5)
     })
   })
+
+  describe("If there is a backoff", () => {
+    const backoff = { baseSeconds: 0.05, factor: 2, maxSeconds: 0.2 }
+    it("it starts at the base time [slow]", async () => {
+      const ledger = Array.of<number>()
+      const retry = Job.retry(succeedOnNth(3, () => ledger.push(Date.now())), 3).withBackoff(backoff)
+      assert.isTrue(await succeeded(retry.run()))
+      assert.equal(ledger.length, 3)
+      assert.approximately(ledger[1] - ledger[0], 50, 30)
+    })
+    it("it increases by the specified factor [slow]", async () => {
+      const ledger = Array.of<number>()
+      const retry = Job.retry(succeedOnNth(4, () => ledger.push(Date.now())), 4).withBackoff(backoff)
+      assert.isTrue(await succeeded(retry.run()))
+      assert.equal(ledger.length, 4)
+      assert.approximately(ledger[1] - ledger[0], 50, 30)
+      assert.approximately(ledger[2] - ledger[1], 100, 30)
+      assert.approximately(ledger[3] - ledger[2], 200, 30)
+    })
+    it("it caps at the maximum [slow]", async () => {
+      const ledger = Array.of<number>()
+      const retry = Job.retry(succeedOnNth(5, () => ledger.push(Date.now())), 5).withBackoff(backoff)
+      assert.isTrue(await succeeded(retry.run()))
+      assert.equal(ledger.length, 5)
+      assert.approximately(ledger[3] - ledger[2], 200, 30)
+      assert.approximately(ledger[4] - ledger[3], 200, 30)
+    })
+  })
 })
 
 async function succeeded(promise: Promise<void>): Promise<boolean> {
